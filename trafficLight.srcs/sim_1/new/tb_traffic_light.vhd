@@ -1,5 +1,7 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+
 ENTITY tb_traffic_light IS
 END tb_traffic_light;
 
@@ -16,7 +18,9 @@ ARCHITECTURE Behavioral OF tb_traffic_light IS
       -- Dubugs
       IsOnOut : OUT STD_LOGIC;
       ClkDividedOut : OUT STD_LOGIC;
-      ColorSelectorOut : OUT STD_LOGIC_VECTOR(1 DOWNTO 0));
+      ColorSelectorOut : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+      timeTillNextStateOut : OUT UNSIGNED(7 DOWNTO 0)
+    );
   END COMPONENT;
 
   SIGNAL IsOn : STD_LOGIC := '1';
@@ -28,6 +32,7 @@ ARCHITECTURE Behavioral OF tb_traffic_light IS
   SIGNAL IsOnOut : STD_LOGIC;
   SIGNAL ClkDividedOut : STD_LOGIC;
   SIGNAL ColorSelectorOut : STD_LOGIC_VECTOR(1 DOWNTO 0);
+  SIGNAL TimeTillNextStateOut : UNSIGNED(7 DOWNTO 0);
 
   CONSTANT period : TIME := 2ns;
   SIGNAL error : STD_LOGIC;
@@ -41,7 +46,8 @@ BEGIN
     GreenOnSecondLed => GreenOnSecondLed,
     IsOnOut => IsOnOut,
     ClkDividedOut => ClkDividedOut,
-    ColorSelectorOut => ColorSelectorOut);
+    ColorSelectorOut => ColorSelectorOut,
+    TimeTillNextStateOut => TimeTillNextStateOut);
 
   stim_Clk : PROCESS
   BEGIN
@@ -51,7 +57,7 @@ BEGIN
 
   stim_IsOn : PROCESS
   BEGIN
-    WAIT FOR period * 100;
+    WAIT FOR period * 400;
     IsOn <= NOT IsOn;
   END PROCESS;
 

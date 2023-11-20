@@ -1,0 +1,25 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY mux_4_gen_to_1 IS
+  GENERIC (
+    Bits : INTEGER
+  );
+  PORT (
+    A : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+    B : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+    C : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+    D : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+    S : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+    Y : OUT STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0)
+  );
+END mux_4_gen_to_1;
+
+ARCHITECTURE Behavioral OF mux_4_gen_to_1 IS
+
+BEGIN
+  Y <= A WHEN S = "00" ELSE
+    B WHEN S = "01" ELSE
+    C WHEN S = "10" ELSE
+    D;
+END Behavioral;

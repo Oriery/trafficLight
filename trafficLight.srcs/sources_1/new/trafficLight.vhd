@@ -1,35 +1,6 @@
-----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 20.11.2023 17:56:02
--- Design Name: 
--- Module Name: trafficLight - Behavioral
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
-----------------------------------------------------------------------------------
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
-USE IEEE.STD_LOGIC_UNSIGNED.ALL;
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
 ENTITY trafficLight IS
   PORT (
@@ -42,7 +13,9 @@ ENTITY trafficLight IS
     -- Dubugs
     IsOnOut : OUT STD_LOGIC;
     ClkDividedOut : OUT STD_LOGIC;
-    ColorSelectorOut : OUT STD_LOGIC_VECTOR(1 DOWNTO 0));
+    ColorSelectorOut : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
+    TimeTillNextStateOut : OUT UNSIGNED(7 DOWNTO 0)
+  );
 END trafficLight;
 
 ARCHITECTURE Behavioral OF trafficLight IS
@@ -95,8 +68,34 @@ ARCHITECTURE Behavioral OF trafficLight IS
     );
   END COMPONENT;
 
+  COMPONENT countdown_timer IS
+    GENERIC (Bits : INTEGER := 8);
+    PORT (
+      C : IN STD_LOGIC;
+      R_async : IN STD_LOGIC;
+      R_sync : IN STD_LOGIC;
+      D : IN UNSIGNED(Bits - 1 DOWNTO 0);
+      Count : OUT UNSIGNED(Bits - 1 DOWNTO 0));
+  END COMPONENT;
+
+  COMPONENT mux_4_gen_to_1 IS
+    GENERIC (
+      Bits : INTEGER
+    );
+    PORT (
+      A : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+      B : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+      C : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+      D : IN STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0);
+      S : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+      Y : OUT STD_LOGIC_VECTOR(Bits - 1 DOWNTO 0)
+    );
+  END COMPONENT;
+
+  -- Common signals
   SIGNAL clkDivided : STD_LOGIC;
   SIGNAL yellow : STD_LOGIC;
+  -- Select color
   SIGNAL state : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00"; -- 00 = green, 01 = yellow, 10 = red, 11 = redYellow
   SIGNAL nextState : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL colorSelector : STD_LOGIC_VECTOR(1 DOWNTO 0); -- like state but can be forced to yellow '01' when traffic light is off
@@ -104,6 +103,15 @@ ARCHITECTURE Behavioral OF trafficLight IS
   SIGNAL wantYellow : STD_LOGIC;
   SIGNAL wantRed : STD_LOGIC;
   SIGNAL wantRedYellow : STD_LOGIC;
+  -- Countdown timer
+  SIGNAL timeTillNextState : UNSIGNED(7 DOWNTO 0);
+  SIGNAL lengthOfNextState : UNSIGNED(7 DOWNTO 0);
+  SIGNAL shouldChangeState : STD_LOGIC := '0';
+  -- Lengths of states
+  SIGNAL lengthOfGreen : UNSIGNED(7 DOWNTO 0) := "00001000"; -- 8
+  CONSTANT lengthOfYellow : UNSIGNED(7 DOWNTO 0) := "00000011"; -- 3
+  SIGNAL lengthOfRed : UNSIGNED(7 DOWNTO 0) := "00000100"; -- 4
+  CONSTANT lengthOfRedYellow : UNSIGNED(7 DOWNTO 0) := "00000010"; -- 2
 
 BEGIN
   -- slow down clk to be 1Hz
@@ -146,6 +154,36 @@ BEGIN
     D => wantRedYellow
   );
 
+  -- set length of next state
+  setLengthOfNextState : mux_4_gen_to_1
+  GENERIC MAP(
+    Bits => 8
+  )
+  PORT MAP(
+    A => std_logic_vector(lengthOfGreen),
+    B => std_logic_vector(lengthOfYellow),
+    C => std_logic_vector(lengthOfRed),
+    D => std_logic_vector(lengthOfRedYellow),
+    S => nextState,
+    std_logic_vector(Y) => lengthOfNextState
+  );
+
+  -- countdown timer
+  timer : countdown_timer
+  GENERIC MAP(
+    Bits => 8
+  )
+  PORT MAP(
+    C => clkDivided,
+    R_sync => '0',
+    R_async => shouldChangeState,
+    D => lengthOfNextState,
+    Count => timeTillNextState
+  );
+
+  -- set shouldChangeState
+  shouldChangeState <= '1' WHEN timeTillNextState = 0 ELSE '0';
+
   -- set output
   Red <= wantRed OR wantRedYellow;
   Green <= wantGreen;
@@ -154,11 +192,10 @@ BEGIN
   RedOnSecondLed <= yellow;
   GreenOnSecondLed <= yellow;
 
-  -- TEMP:
-
-  PROCESS (clkDivided)
+  -- change state
+  PROCESS (shouldChangeState)
   BEGIN
-    IF rising_edge(clkDivided) THEN
+    IF rising_edge(shouldChangeState) THEN
       state <= nextState;
     END IF;
   END PROCESS;
@@ -167,4 +204,5 @@ BEGIN
   IsOnOut <= IsOn;
   ClkDividedOut <= clkDivided;
   ColorSelectorOut <= colorSelector;
+  TimeTillNextStateOut <= timeTillNextState;
 END Behavioral;
