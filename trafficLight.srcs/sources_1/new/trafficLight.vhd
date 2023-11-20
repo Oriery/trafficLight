@@ -17,10 +17,10 @@
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
-
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.STD_LOGIC_ARITH.ALL;
+USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -31,20 +31,44 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity trafficLight is
-    Port ( IsOn : in STD_LOGIC;
-           Clk : in STD_LOGIC;
-           Red : out STD_LOGIC;
-           Green : out STD_LOGIC;
-           Blue : out STD_LOGIC;
-           -- Dubugs
-           IsOnOut : out STD_LOGIC
-        );
-end trafficLight;
+ENTITY trafficLight IS
+  PORT (
+    IsOn : IN STD_LOGIC;
+    Clk : IN STD_LOGIC;
+    Red : OUT STD_LOGIC;
+    Green : OUT STD_LOGIC;
+    Blue : OUT STD_LOGIC;
+    -- Dubugs
+    IsOnOut : OUT STD_LOGIC;
+    ClkDividedOut : OUT STD_LOGIC);
+END trafficLight;
 
-architecture Behavioral of trafficLight is
+ARCHITECTURE Behavioral OF trafficLight IS
 
-begin
-Red <= '1' when IsOn = '1' else '0';
-IsOnOut <= IsOn;
-end Behavioral;
+  COMPONENT clock_divider
+    GENERIC (
+      divider : NATURAL
+    );
+    PORT (
+      clk_in : IN STD_LOGIC;
+      clk_out : OUT STD_LOGIC
+    );
+  END COMPONENT;
+
+  SIGNAL clkDivided : STD_LOGIC;
+
+BEGIN
+  clk_div_inst : clock_divider
+  GENERIC MAP(
+    divider => 2 -- TODO: change to 100000000 when using real system clock
+  )
+  PORT MAP(
+    clk_in => Clk,
+    clk_out => clkDivided
+  );
+
+  Red <= '1' WHEN IsOn = '1' ELSE
+    '0';
+  IsOnOut <= IsOn;
+  ClkDividedOut <= clkDivided;
+END Behavioral;

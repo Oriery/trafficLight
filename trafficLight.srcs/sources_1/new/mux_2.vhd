@@ -1,0 +1,17 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+
+ENTITY mux_2 IS
+  PORT (
+    A : IN STD_LOGIC;
+    B : IN STD_LOGIC;
+    S : IN STD_LOGIC;
+    Z : OUT STD_LOGIC);
+END mux_2;
+
+ARCHITECTURE Behavioral OF mux_2 IS
+
+BEGIN
+  Z <= A WHEN S = '0' ELSE
+    B;
+END Behavioral;
