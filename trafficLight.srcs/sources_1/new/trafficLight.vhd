@@ -37,7 +37,8 @@ ENTITY trafficLight IS
     Clk : IN STD_LOGIC;
     Red : OUT STD_LOGIC;
     Green : OUT STD_LOGIC;
-    Blue : OUT STD_LOGIC;
+    RedOnSecondLed : OUT STD_LOGIC; -- for yellow
+    GreenOnSecondLed : OUT STD_LOGIC; -- for yellow
     -- Dubugs
     IsOnOut : OUT STD_LOGIC;
     ClkDividedOut : OUT STD_LOGIC);
@@ -56,6 +57,7 @@ ARCHITECTURE Behavioral OF trafficLight IS
   END COMPONENT;
 
   SIGNAL clkDivided : STD_LOGIC;
+  SIGNAL yellow : STD_LOGIC;
 
 BEGIN
   clk_div_inst : clock_divider
@@ -69,6 +71,11 @@ BEGIN
 
   Red <= '1' WHEN IsOn = '1' ELSE
     '0';
+
+  RedOnSecondLed <= yellow;
+  GreenOnSecondLed <= yellow;
+
+  -- for debugging:
   IsOnOut <= IsOn;
   ClkDividedOut <= clkDivided;
 END Behavioral;
