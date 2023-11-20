@@ -106,7 +106,10 @@ ARCHITECTURE Behavioral OF trafficLight IS
   -- Countdown timer
   SIGNAL timeTillNextState : UNSIGNED(7 DOWNTO 0);
   SIGNAL lengthOfNextState : UNSIGNED(7 DOWNTO 0);
-  SIGNAL shouldChangeState : STD_LOGIC := '0';
+  SIGNAL shouldChangeState : STD_LOGIC;
+  -- Blinking
+  SIGNAL shouldBlink : STD_LOGIC;
+  SIGNAL lightIsOn : STD_LOGIC;
   -- Lengths of states
   SIGNAL lengthOfGreen : UNSIGNED(7 DOWNTO 0) := "00001000"; -- 8
   CONSTANT lengthOfYellow : UNSIGNED(7 DOWNTO 0) := "00000011"; -- 3
@@ -146,7 +149,7 @@ BEGIN
   -- set wanted color
   setWantedColor : demux_4
   PORT MAP(
-    I => '1', -- TODO: should be signal which can either be constant or blinking
+    I => lightIsOn,
     S => colorSelector,
     A => wantGreen,
     B => wantYellow,
@@ -183,6 +186,18 @@ BEGIN
 
   -- set shouldChangeState
   shouldChangeState <= '1' WHEN timeTillNextState = 0 ELSE '0';
+
+  -- set shouldBlink
+  shouldBlink <= '1' WHEN ((state = "00" and timeTillNextState < 4) or IsOn = '0') ELSE '0';
+
+  -- set lightIsOn
+  setLightIsOn : mux_2
+  PORT MAP(
+    A => '1',
+    B => not clkDivided,
+    S => shouldBlink,
+    Z => lightIsOn
+  );
 
   -- set output
   Red <= wantRed OR wantRedYellow;
