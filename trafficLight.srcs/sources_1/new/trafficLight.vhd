@@ -69,7 +69,7 @@ ARCHITECTURE Behavioral OF trafficLight IS
   END COMPONENT;
 
   COMPONENT countdown_timer IS
-    GENERIC (Bits : INTEGER := 8);
+    GENERIC (Bits : INTEGER);
     PORT (
       C : IN STD_LOGIC;
       R_async : IN STD_LOGIC;

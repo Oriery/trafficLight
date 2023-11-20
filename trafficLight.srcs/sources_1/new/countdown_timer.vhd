@@ -3,7 +3,7 @@ USE IEEE.STD_LOGIC_1164.ALL;
 USE IEEE.STD_LOGIC_ARITH.ALL;
 
 ENTITY countdown_timer IS
-  GENERIC (Bits : INTEGER := 8);
+  GENERIC (Bits : INTEGER);
   PORT (
     C : IN STD_LOGIC;
     R_async : IN STD_LOGIC;

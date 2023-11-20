@@ -5,7 +5,7 @@ USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 ENTITY clock_divider IS
   GENERIC (
-    divider : INTEGER := 100000000
+    divider : INTEGER
   );
   PORT (
     clk_in : IN STD_LOGIC;
