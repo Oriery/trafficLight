@@ -15,7 +15,8 @@ ARCHITECTURE Behavioral OF tb_traffic_light IS
       GreenOnSecondLed : OUT STD_LOGIC; -- for yellow
       -- Dubugs
       IsOnOut : OUT STD_LOGIC;
-      ClkDividedOut : OUT STD_LOGIC);
+      ClkDividedOut : OUT STD_LOGIC;
+      ColorSelectorOut : OUT STD_LOGIC_VECTOR(1 DOWNTO 0));
   END COMPONENT;
 
   SIGNAL IsOn : STD_LOGIC := '1';
@@ -26,11 +27,12 @@ ARCHITECTURE Behavioral OF tb_traffic_light IS
   SIGNAL GreenOnSecondLed : STD_LOGIC;
   SIGNAL IsOnOut : STD_LOGIC;
   SIGNAL ClkDividedOut : STD_LOGIC;
+  SIGNAL ColorSelectorOut : STD_LOGIC_VECTOR(1 DOWNTO 0);
 
   CONSTANT period : TIME := 2ns;
-  signal error : std_logic;
+  SIGNAL error : STD_LOGIC;
 BEGIN
-  uut: trafficLight PORT MAP (
+  uut : trafficLight PORT MAP(
     IsOn => IsOn,
     Clk => Clk,
     Red => Red,
@@ -38,20 +40,21 @@ BEGIN
     RedOnSecondLed => RedOnSecondLed,
     GreenOnSecondLed => GreenOnSecondLed,
     IsOnOut => IsOnOut,
-    ClkDividedOut => ClkDividedOut);
+    ClkDividedOut => ClkDividedOut,
+    ColorSelectorOut => ColorSelectorOut);
 
-  stim_Clk: process
-  begin
-    wait for period;
-    Clk <= not Clk;
-  end process;
+  stim_Clk : PROCESS
+  BEGIN
+    WAIT FOR period;
+    Clk <= NOT Clk;
+  END PROCESS;
 
-  stim_IsOn: process
-  begin
-    wait for period * 100;
-    IsOn <= not IsOn;
-  end process;
+  stim_IsOn : PROCESS
+  BEGIN
+    WAIT FOR period * 100;
+    IsOn <= NOT IsOn;
+  END PROCESS;
 
-  error <= RedOnSecondLed xor GreenOnSecondLed; -- yellow should be on only when both red and green are on
+  error <= RedOnSecondLed XOR GreenOnSecondLed; -- yellow should be on only when both red and green are on
 
 END Behavioral;

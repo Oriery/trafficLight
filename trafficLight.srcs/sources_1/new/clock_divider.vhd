@@ -5,7 +5,7 @@ USE IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 ENTITY clock_divider IS
   GENERIC (
-    divider : NATURAL := 100000000
+    divider : INTEGER := 100000000
   );
   PORT (
     clk_in : IN STD_LOGIC;
@@ -14,7 +14,7 @@ ENTITY clock_divider IS
 END clock_divider;
 
 ARCHITECTURE Behavioral OF clock_divider IS
-  SIGNAL counter : NATURAL := 0;
+  SIGNAL counter : INTEGER := 0;
   SIGNAL tmp_clk_out : STD_LOGIC := '0';
 BEGIN
   PROCESS (clk_in)
