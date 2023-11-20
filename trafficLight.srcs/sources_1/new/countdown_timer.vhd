@@ -22,7 +22,7 @@ BEGIN
     ELSIF rising_edge(C) THEN
       IF R_sync = '1' THEN
         current_count <= D;
-      ELSIF current_count > 0 THEN
+      ELSIF current_count /= 0 THEN
         current_count <= current_count - 1;
       END IF;
     END IF;

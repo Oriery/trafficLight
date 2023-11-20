@@ -14,34 +14,8 @@ END demux_4;
 
 ARCHITECTURE Behavioral OF demux_4 IS
 BEGIN
-  PROCESS (I, S)
-  BEGIN
-    CASE S IS
-      WHEN "00" =>
-        A <= I;
-        B <= '0';
-        C <= '0';
-        D <= '0';
-      WHEN "01" =>
-        A <= '0';
-        B <= I;
-        C <= '0';
-        D <= '0';
-      WHEN "10" =>
-        A <= '0';
-        B <= '0';
-        C <= I;
-        D <= '0';
-      WHEN "11" =>
-        A <= '0';
-        B <= '0';
-        C <= '0';
-        D <= I;
-      WHEN OTHERS =>
-        A <= '0';
-        B <= '0';
-        C <= '0';
-        D <= '0';
-    END CASE;
-  END PROCESS;
+  A <= I WHEN S = "00" ELSE '0';
+  B <= I WHEN S = "01" ELSE '0';
+  C <= I WHEN S = "10" ELSE '0';
+  D <= I WHEN S = "11" ELSE '0';
 END Behavioral;

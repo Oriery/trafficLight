@@ -20,11 +20,11 @@ BEGIN
   PROCESS (clk_in)
   BEGIN
     IF rising_edge(clk_in) THEN
-      IF counter < (divider / 2 - 1) THEN
-        counter <= counter + 1;
-      ELSE
+      IF counter = (divider / 2 - 1) THEN
         counter <= 0;
         tmp_clk_out <= NOT tmp_clk_out;
+      ELSE
+        counter <= counter + 1;
       END IF;
     END IF;
   END PROCESS;
