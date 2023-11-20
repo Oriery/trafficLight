@@ -35,13 +35,16 @@ entity trafficLight is
     Port ( IsOn : in STD_LOGIC;
            Clk : in STD_LOGIC;
            Red : out STD_LOGIC;
-           Yellow : out STD_LOGIC;
-           Green : out STD_LOGIC);
+           Green : out STD_LOGIC;
+           Blue : out STD_LOGIC;
+           -- Dubugs
+           IsOnOut : out STD_LOGIC
+        );
 end trafficLight;
 
 architecture Behavioral of trafficLight is
 
 begin
-
-
+Red <= '1' when IsOn = '1' else '0';
+IsOnOut <= IsOn;
 end Behavioral;
