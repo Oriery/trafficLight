@@ -47,7 +47,7 @@ END trafficLight;
 
 ARCHITECTURE Behavioral OF trafficLight IS
 
-  COMPONENT clock_divider
+  COMPONENT clock_divider IS
     GENERIC (
       divider : INTEGER
     );
@@ -57,7 +57,7 @@ ARCHITECTURE Behavioral OF trafficLight IS
     );
   END COMPONENT;
 
-  COMPONENT increment_by_one
+  COMPONENT increment_by_one IS
     GENERIC (
       vector_length : INTEGER
     );
@@ -67,7 +67,7 @@ ARCHITECTURE Behavioral OF trafficLight IS
     );
   END COMPONENT;
 
-  COMPONENT mux_2
+  COMPONENT mux_2 IS
     PORT (
       A : IN STD_LOGIC;
       B : IN STD_LOGIC;
@@ -75,7 +75,7 @@ ARCHITECTURE Behavioral OF trafficLight IS
       Z : OUT STD_LOGIC);
   END COMPONENT;
 
-  COMPONENT mux_4_2
+  COMPONENT mux_4_2 IS
     PORT (
       A : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
       B : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
@@ -84,11 +84,26 @@ ARCHITECTURE Behavioral OF trafficLight IS
     );
   END COMPONENT;
 
+  COMPONENT demux_4 IS
+    PORT (
+      I : IN STD_LOGIC;
+      S : IN STD_LOGIC_VECTOR(1 DOWNTO 0);
+      A : OUT STD_LOGIC;
+      B : OUT STD_LOGIC;
+      C : OUT STD_LOGIC;
+      D : OUT STD_LOGIC
+    );
+  END COMPONENT;
+
   SIGNAL clkDivided : STD_LOGIC;
   SIGNAL yellow : STD_LOGIC;
   SIGNAL state : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00"; -- 00 = green, 01 = yellow, 10 = red, 11 = redYellow
   SIGNAL nextState : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL colorSelector : STD_LOGIC_VECTOR(1 DOWNTO 0); -- like state but can be forced to yellow '01' when traffic light is off
+  SIGNAL wantGreen : STD_LOGIC;
+  SIGNAL wantYellow : STD_LOGIC;
+  SIGNAL wantRed : STD_LOGIC;
+  SIGNAL wantRedYellow : STD_LOGIC;
 
 BEGIN
   -- slow down clk to be 1Hz
@@ -120,20 +135,33 @@ BEGIN
     Z => colorSelector
   );
 
-  Red <= '1' WHEN IsOn = '1' ELSE
-    '0';
+  -- set wanted color
+  setWantedColor : demux_4
+  PORT MAP(
+    I => '1', -- TODO: should be signal which can either be constant or blinking
+    S => colorSelector,
+    A => wantGreen,
+    B => wantYellow,
+    C => wantRed,
+    D => wantRedYellow
+  );
 
+  -- set output
+  Red <= wantRed OR wantRedYellow;
+  Green <= wantGreen;
+  yellow <= wantYellow OR wantRedYellow;
+  -- yellow = red + green
   RedOnSecondLed <= yellow;
   GreenOnSecondLed <= yellow;
 
   -- TEMP:
 
-  process(clkDivided)
-  begin
-    if rising_edge(clkDivided) then
+  PROCESS (clkDivided)
+  BEGIN
+    IF rising_edge(clkDivided) THEN
       state <= nextState;
-    end if;
-  end process;
+    END IF;
+  END PROCESS;
 
   -- for debugging:
   IsOnOut <= IsOn;
