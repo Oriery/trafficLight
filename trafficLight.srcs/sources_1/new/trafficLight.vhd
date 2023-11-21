@@ -30,16 +30,6 @@ ARCHITECTURE Behavioral OF trafficLight IS
     );
   END COMPONENT;
 
-  COMPONENT increment_by_one IS
-    GENERIC (
-      vector_length : INTEGER
-    );
-    PORT (
-      input_vector : IN STD_LOGIC_VECTOR(vector_length - 1 DOWNTO 0);
-      output_vector : OUT STD_LOGIC_VECTOR(vector_length - 1 DOWNTO 0)
-    );
-  END COMPONENT;
-
   COMPONENT mux_2 IS
     PORT (
       A : IN STD_LOGIC;
@@ -92,12 +82,21 @@ ARCHITECTURE Behavioral OF trafficLight IS
     );
   END COMPONENT;
 
+  COMPONENT TwoStepDFF IS
+    PORT (
+      clk : IN STD_LOGIC;
+      reset : IN STD_LOGIC;
+      D : IN STD_LOGIC;
+      Q : OUT STD_LOGIC);
+  END COMPONENT;
+
   -- Common signals
   SIGNAL clkDivided : STD_LOGIC;
+  SIGNAL notClkDivided : STD_LOGIC;
   SIGNAL yellow : STD_LOGIC;
   -- Select color
   SIGNAL state : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00"; -- 00 = green, 01 = yellow, 10 = red, 11 = redYellow
-  SIGNAL nextState : STD_LOGIC_VECTOR(1 DOWNTO 0);
+  SIGNAL nextState : STD_LOGIC_VECTOR(1 DOWNTO 0) := "01";
   SIGNAL colorSelector : STD_LOGIC_VECTOR(1 DOWNTO 0); -- like state but can be forced to yellow '01' when traffic light is off
   SIGNAL wantGreen : STD_LOGIC;
   SIGNAL wantYellow : STD_LOGIC;
@@ -106,7 +105,7 @@ ARCHITECTURE Behavioral OF trafficLight IS
   -- Countdown timer
   SIGNAL timeTillNextState : UNSIGNED(7 DOWNTO 0);
   SIGNAL lengthOfNextState : UNSIGNED(7 DOWNTO 0);
-  SIGNAL shouldChangeState : STD_LOGIC;
+  SIGNAL shouldChangeState : STD_LOGIC := '0';
   -- Blinking
   SIGNAL shouldBlink : STD_LOGIC;
   SIGNAL lightIsOn : STD_LOGIC;
@@ -120,7 +119,7 @@ BEGIN
   -- slow down clk to be 1Hz
   slowDownClk : clock_divider
   GENERIC MAP(
-    divider => 2 -- TODO: change to 100000000 when using real system clock
+    divider => 100000000 -- TODO: change to 100000000 when using real system clock
   )
   PORT MAP(
     clk_in => Clk,
@@ -128,14 +127,7 @@ BEGIN
   );
 
   -- calc next state
-  setNextState : increment_by_one
-  GENERIC MAP(
-    vector_length => 2
-  )
-  PORT MAP(
-    input_vector => state,
-    output_vector => nextState
-  );
+  nextState <= unsigned(state) + 1;
 
   -- set colorSelector
   setColorSelector : mux_4_2
@@ -163,12 +155,12 @@ BEGIN
     Bits => 8
   )
   PORT MAP(
-    A => std_logic_vector(lengthOfGreen),
-    B => std_logic_vector(lengthOfYellow),
-    C => std_logic_vector(lengthOfRed),
-    D => std_logic_vector(lengthOfRedYellow),
+    A => STD_LOGIC_VECTOR(lengthOfGreen),
+    B => STD_LOGIC_VECTOR(lengthOfYellow),
+    C => STD_LOGIC_VECTOR(lengthOfRed),
+    D => STD_LOGIC_VECTOR(lengthOfRedYellow),
     S => nextState,
-    std_logic_vector(Y) => lengthOfNextState
+    STD_LOGIC_VECTOR(Y) => lengthOfNextState
   );
 
   -- countdown timer
@@ -185,19 +177,28 @@ BEGIN
   );
 
   -- set shouldChangeState
-  shouldChangeState <= '1' WHEN timeTillNextState = 0 ELSE '0';
+  PROCESS (timeTillNextState, Clk)
+  BEGIN
+    IF (timeTillNextState = 0) THEN
+      shouldChangeState <= '1';
+    ELSif falling_edge(Clk) THEN
+      shouldChangeState <= '0';
+    END IF;
+  END PROCESS;
 
   -- set shouldBlink
-  shouldBlink <= '1' WHEN ((state = "00" and timeTillNextState < 4) or IsOn = '0') ELSE '0';
+  shouldBlink <= '1' WHEN ((state = "00" AND timeTillNextState < 4) OR IsOn = '0') ELSE
+    '0';
 
   -- set lightIsOn
   setLightIsOn : mux_2
   PORT MAP(
     A => '1',
-    B => not clkDivided,
+    B => notClkDivided,
     S => shouldBlink,
     Z => lightIsOn
   );
+  notClkDivided <= NOT clkDivided;
 
   -- set output
   Red <= wantRed OR wantRedYellow;
@@ -208,12 +209,20 @@ BEGIN
   GreenOnSecondLed <= yellow;
 
   -- change state
-  PROCESS (shouldChangeState)
-  BEGIN
-    IF rising_edge(shouldChangeState) THEN
-      state <= nextState;
-    END IF;
-  END PROCESS;
+  changeState0 : TwoStepDFF
+  PORT MAP(
+    clk => shouldChangeState,
+    reset => '0',
+    D => nextState(0),
+    Q => state(0)
+  );
+  changeState1 : TwoStepDFF
+  PORT MAP(
+    clk => shouldChangeState,
+    reset => '0',
+    D => nextState(1),
+    Q => state(1)
+  );
 
   -- for debugging:
   IsOnOut <= IsOn;

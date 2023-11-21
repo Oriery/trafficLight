@@ -34,7 +34,7 @@ ARCHITECTURE Behavioral OF tb_traffic_light IS
   SIGNAL ColorSelectorOut : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL TimeTillNextStateOut : UNSIGNED(7 DOWNTO 0);
 
-  CONSTANT period : TIME := 2ns;
+  CONSTANT period : TIME := 1ns;
   SIGNAL error : STD_LOGIC;
 BEGIN
   uut : trafficLight PORT MAP(
