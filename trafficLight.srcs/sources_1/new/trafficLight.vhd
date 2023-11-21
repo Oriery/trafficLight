@@ -1,6 +1,6 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 ENTITY trafficLight IS
   PORT (
@@ -14,7 +14,9 @@ ENTITY trafficLight IS
     IsOnOut : OUT STD_LOGIC;
     ClkDividedOut : OUT STD_LOGIC;
     ColorSelectorOut : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-    TimeTillNextStateOut : OUT UNSIGNED(7 DOWNTO 0)
+    TimeTillNextStateOut : OUT UNSIGNED(7 DOWNTO 0);
+    SegmentsSelector : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+    DigitSelector : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
   );
 END trafficLight;
 
@@ -90,13 +92,22 @@ ARCHITECTURE Behavioral OF trafficLight IS
       Q : OUT STD_LOGIC);
   END COMPONENT;
 
+  COMPONENT SevenSegmentDisplay4Digits IS
+    PORT (
+      num : IN UNSIGNED(7 DOWNTO 0);
+      clk : IN STD_LOGIC;
+      digit : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);
+      segments : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+    );
+  END COMPONENT;
+
   -- Common signals
   SIGNAL clkDivided : STD_LOGIC;
   SIGNAL notClkDivided : STD_LOGIC;
   SIGNAL yellow : STD_LOGIC;
   -- Select color
-  SIGNAL state : STD_LOGIC_VECTOR(1 DOWNTO 0) := "00"; -- 00 = green, 01 = yellow, 10 = red, 11 = redYellow
-  SIGNAL nextState : STD_LOGIC_VECTOR(1 DOWNTO 0) := "01";
+  SIGNAL state : STD_LOGIC_VECTOR(1 DOWNTO 0); -- 00 = green, 01 = yellow, 10 = red, 11 = redYellow
+  SIGNAL nextState : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL colorSelector : STD_LOGIC_VECTOR(1 DOWNTO 0); -- like state but can be forced to yellow '01' when traffic light is off
   SIGNAL wantGreen : STD_LOGIC;
   SIGNAL wantYellow : STD_LOGIC;
@@ -114,6 +125,9 @@ ARCHITECTURE Behavioral OF trafficLight IS
   CONSTANT lengthOfYellow : UNSIGNED(7 DOWNTO 0) := "00000011"; -- 3
   SIGNAL lengthOfRed : UNSIGNED(7 DOWNTO 0) := "00000100"; -- 4
   CONSTANT lengthOfRedYellow : UNSIGNED(7 DOWNTO 0) := "00000010"; -- 2
+  -- Display
+  SIGNAL digitSelector_temp : STD_LOGIC_VECTOR(3 DOWNTO 0);
+  SIGNAL clkDividedForDisplay : STD_LOGIC;
 
 BEGIN
   -- slow down clk to be 1Hz
@@ -127,7 +141,7 @@ BEGIN
   );
 
   -- calc next state
-  nextState <= unsigned(state) + 1;
+  nextState <= std_logic_vector(to_unsigned(to_integer(unsigned(state)) + 1, state'length));
 
   -- set colorSelector
   setColorSelector : mux_4_2
@@ -181,7 +195,7 @@ BEGIN
   BEGIN
     IF (timeTillNextState = 0) THEN
       shouldChangeState <= '1';
-    ELSif falling_edge(Clk) THEN
+    ELSIF falling_edge(Clk) THEN
       shouldChangeState <= '0';
     END IF;
   END PROCESS;
@@ -223,6 +237,26 @@ BEGIN
     D => nextState(1),
     Q => state(1)
   );
+
+  -- set clkDividedForDisplay so that display refresh rate is 100Hz. 100Hz * 4 digits = 400Hz. 100M / 400 = 250000
+  setClkDividedForDisplay : clock_divider
+  GENERIC MAP(
+    divider => 250000
+  )
+  PORT MAP(
+    clk_in => Clk,
+    clk_out => clkDividedForDisplay
+  );
+
+  -- output time on 7 segment display
+  outputTime : SevenSegmentDisplay4Digits
+  PORT MAP(
+    num => timeTillNextState,
+    clk => clkDividedForDisplay,
+    digit => digitSelector_temp,
+    segments => SegmentsSelector
+  );
+  DigitSelector <= "1111" & digitSelector_temp;
 
   -- for debugging:
   IsOnOut <= IsOn;

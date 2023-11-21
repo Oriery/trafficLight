@@ -1,6 +1,6 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
-USE IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 ENTITY tb_traffic_light IS
 END tb_traffic_light;
@@ -19,7 +19,9 @@ ARCHITECTURE Behavioral OF tb_traffic_light IS
       IsOnOut : OUT STD_LOGIC;
       ClkDividedOut : OUT STD_LOGIC;
       ColorSelectorOut : OUT STD_LOGIC_VECTOR(1 DOWNTO 0);
-      timeTillNextStateOut : OUT UNSIGNED(7 DOWNTO 0)
+      timeTillNextStateOut : OUT UNSIGNED(7 DOWNTO 0);
+      SegmentsSelector : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
+      DigitSelector : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
     );
   END COMPONENT;
 
@@ -33,6 +35,8 @@ ARCHITECTURE Behavioral OF tb_traffic_light IS
   SIGNAL ClkDividedOut : STD_LOGIC;
   SIGNAL ColorSelectorOut : STD_LOGIC_VECTOR(1 DOWNTO 0);
   SIGNAL TimeTillNextStateOut : UNSIGNED(7 DOWNTO 0);
+  SIGNAL SegmentsSelector : STD_LOGIC_VECTOR(7 DOWNTO 0);
+  SIGNAL DigitSelector : STD_LOGIC_VECTOR(7 DOWNTO 0);
 
   CONSTANT period : TIME := 1ns;
   SIGNAL error : STD_LOGIC;
@@ -47,7 +51,9 @@ BEGIN
     IsOnOut => IsOnOut,
     ClkDividedOut => ClkDividedOut,
     ColorSelectorOut => ColorSelectorOut,
-    TimeTillNextStateOut => TimeTillNextStateOut);
+    TimeTillNextStateOut => TimeTillNextStateOut,
+    SegmentsSelector => SegmentsSelector,
+    DigitSelector => DigitSelector);
 
   stim_Clk : PROCESS
   BEGIN
