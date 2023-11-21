@@ -1,6 +1,6 @@
 LIBRARY IEEE;
 USE IEEE.STD_LOGIC_1164.ALL;
-use IEEE.NUMERIC_STD.ALL;
+USE IEEE.NUMERIC_STD.ALL;
 
 ENTITY trafficLight IS
   PORT (
@@ -121,13 +121,14 @@ ARCHITECTURE Behavioral OF trafficLight IS
   SIGNAL shouldBlink : STD_LOGIC;
   SIGNAL lightIsOn : STD_LOGIC;
   -- Lengths of states
-  SIGNAL lengthOfGreen : UNSIGNED(7 DOWNTO 0) := "00001000"; -- 8
+  SIGNAL lengthOfGreen : UNSIGNED(7 DOWNTO 0) := "00001010"; -- 10
   CONSTANT lengthOfYellow : UNSIGNED(7 DOWNTO 0) := "00000011"; -- 3
   SIGNAL lengthOfRed : UNSIGNED(7 DOWNTO 0) := "00000100"; -- 4
   CONSTANT lengthOfRedYellow : UNSIGNED(7 DOWNTO 0) := "00000010"; -- 2
   -- Display
   SIGNAL digitSelector_temp : STD_LOGIC_VECTOR(3 DOWNTO 0);
   SIGNAL clkDividedForDisplay : STD_LOGIC;
+  SIGNAL shouldDisplay : STD_LOGIC;
 
 BEGIN
   -- slow down clk to be 1Hz
@@ -141,7 +142,7 @@ BEGIN
   );
 
   -- calc next state
-  nextState <= std_logic_vector(to_unsigned(to_integer(unsigned(state)) + 1, state'length));
+  nextState <= STD_LOGIC_VECTOR(to_unsigned(to_integer(unsigned(state)) + 1, state'length));
 
   -- set colorSelector
   setColorSelector : mux_4_2
@@ -256,7 +257,12 @@ BEGIN
     digit => digitSelector_temp,
     segments => SegmentsSelector
   );
-  DigitSelector <= "1111" & digitSelector_temp;
+  -- set DigitSelector: only ON when shouldDisplay is true
+  DigitSelector <= "1111" & digitSelector_temp WHEN shouldDisplay = '1' ELSE (OTHERS => '1');
+
+  -- set shouldDisplay: when working and (green or red) and light is on
+  shouldDisplay <= '1' WHEN (IsOn = '1' AND (wantGreen = '1' OR wantRed = '1') AND lightIsOn = '1') ELSE
+    '0';
 
   -- for debugging:
   IsOnOut <= IsOn;
